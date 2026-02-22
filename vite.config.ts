@@ -9,11 +9,15 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'global': 'globalThis',
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+    },
+    optimizeDeps: {
+      exclude: ['better-sqlite3', 'express', '@google/genai', 'gaxios', 'node-fetch'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

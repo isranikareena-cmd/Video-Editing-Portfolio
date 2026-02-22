@@ -387,6 +387,36 @@ const Services = () => {
 };
 
 const Contact = () => {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStatus('loading');
+    
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
+    try {
+      const response = await fetch('https://formspree.io/f/mgolnpov', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        setStatus('success');
+        form.reset();
+        setTimeout(() => setStatus('idle'), 5000);
+      } else {
+        setStatus('error');
+      }
+    } catch (error) {
+      setStatus('error');
+    }
+  };
+
   return (
     <section id="contact" className="py-24 px-6 md:px-12 bg-brand-black relative overflow-hidden">
       {/* Decorative Elements */}
@@ -425,11 +455,13 @@ const Contact = () => {
             </div>
           </div>
 
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Name</label>
                 <input 
+                  required
+                  name="name"
                   type="text" 
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors"
                   placeholder="John Doe"
@@ -438,6 +470,8 @@ const Contact = () => {
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Email</label>
                 <input 
+                  required
+                  name="email"
                   type="email" 
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors"
                   placeholder="john@example.com"
@@ -446,7 +480,7 @@ const Contact = () => {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Project Type</label>
-              <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors appearance-none">
+              <select name="projectType" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors appearance-none">
                 <option>Commercial</option>
                 <option>Music Video</option>
                 <option>Documentary</option>
@@ -456,15 +490,51 @@ const Contact = () => {
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Message</label>
               <textarea 
+                required
+                name="message"
                 rows={5}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors resize-none"
                 placeholder="Tell us about your project..."
               />
             </div>
-            <button className="w-full bg-brand-accent text-white font-bold py-5 rounded-2xl hover:bg-brand-accent/90 transition-all flex items-center justify-center gap-3 group">
-              SEND MESSAGE
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            
+            <button 
+              disabled={status === 'loading'}
+              className={cn(
+                "w-full font-bold py-5 rounded-2xl transition-all flex items-center justify-center gap-3 group",
+                status === 'loading' ? "bg-zinc-800 cursor-not-allowed" : 
+                status === 'success' ? "bg-emerald-600 text-white" :
+                status === 'error' ? "bg-rose-600 text-white" :
+                "bg-brand-accent text-white hover:bg-brand-accent/90"
+              )}
+            >
+              {status === 'loading' ? 'SENDING...' : 
+               status === 'success' ? 'MESSAGE SENT' : 
+               status === 'error' ? 'TRY AGAIN' : 
+               'SEND MESSAGE'}
+              {status === 'idle' && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              {status === 'success' && <CheckCircle2 className="w-5 h-5" />}
+              {status === 'error' && <X className="w-5 h-5" />}
             </button>
+
+            {status === 'success' && (
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center text-emerald-500 text-xs font-bold uppercase tracking-widest"
+              >
+                Thank you! We'll get back to you shortly.
+              </motion.p>
+            )}
+            {status === 'error' && (
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center text-rose-500 text-xs font-bold uppercase tracking-widest"
+              >
+                Something went wrong. Please try again or email us directly.
+              </motion.p>
+            )}
           </form>
         </div>
       </div>
