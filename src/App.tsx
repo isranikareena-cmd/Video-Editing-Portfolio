@@ -14,6 +14,7 @@ import {
   Mail, 
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Menu,
   X,
   CheckCircle2,
@@ -22,7 +23,11 @@ import {
   Zap,
   Clock,
   Scissors,
-  Palette
+  Palette,
+  Activity,
+  MoreHorizontal,
+  BarChart3,
+  Sparkles
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -228,7 +233,7 @@ const Hero = () => {
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-6xl md:text-[8vw] lg:text-[9vw] font-display font-bold leading-[0.85] tracking-tighter"
+            className="text-6xl md:text-[8vw] lg:text-[9vw] font-display font-bold leading-[0.85] tracking-tighter text-brand-white/90"
           >
             WE CRAFT STORIES
           </motion.h1>
@@ -236,7 +241,7 @@ const Hero = () => {
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             transition={{ duration: 1, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="text-6xl md:text-[8vw] lg:text-[9vw] font-display font-bold leading-[0.85] tracking-tighter text-stroke"
+            className="text-6xl md:text-[8vw] lg:text-[9vw] font-display font-bold leading-[0.85] tracking-tighter text-brand-white/90"
           >
             THAT RESONATE.
           </motion.h1>
@@ -258,9 +263,6 @@ const Hero = () => {
         </motion.div>
       </motion.div>
 
-      {/* Decorative vertical line for balance */}
-      <div className="absolute right-12 bottom-0 w-px h-1/3 bg-gradient-to-t from-brand-accent/50 to-transparent hidden lg:block" />
-
       {/* Scroll Indicator */}
       <motion.div 
         animate={{ y: [0, 10, 0] }}
@@ -273,6 +275,179 @@ const Hero = () => {
     </section>
   );
 };
+
+const GradeWithMe = () => {
+  const [activeNodes, setActiveNodes] = useState<string[]>(['Contrast']);
+  
+  const toggleNode = (id: string) => {
+    setActiveNodes(prev => 
+      prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
+    );
+  };
+
+  const getFilter = () => {
+    let filter = "";
+    if (activeNodes.includes('Contrast')) filter += "contrast(1.5) saturate(1.2) ";
+    if (activeNodes.includes('PowerWindow')) filter += "brightness(1.1) contrast(1.1) ";
+    if (activeNodes.includes('Waterfall')) filter += "hue-rotate(-20deg) saturate(1.5) brightness(0.9) ";
+    if (activeNodes.includes('SkinBody')) filter += "sepia(0.4) saturate(1.4) brightness(1.05) ";
+    if (activeNodes.includes('Glow')) filter += "brightness(1.3) blur(0.4px) saturate(1.1) ";
+    return filter || "none";
+  };
+
+  return (
+    <section className="py-24 px-6 md:px-12 bg-brand-black overflow-hidden border-t border-white/5">
+      <div className="max-w-screen-2xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+          
+          {/* Left Column: Controls */}
+          <div className="lg:col-span-5 space-y-12">
+            <div>
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tighter">Grade with me</h2>
+              <p className="text-lg text-brand-white/60 leading-relaxed max-w-md">
+                Discover how different filter nodes work together in real time to add more life to your recordings.
+              </p>
+            </div>
+
+            {/* Node Graph UI - Compact for Left Column */}
+            <div className="relative py-8">
+              {/* SVG Connectors for compact layout */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-20">
+                <defs>
+                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
+                  </marker>
+                </defs>
+                <g className="text-brand-white">
+                  {/* Contrast to Power Window */}
+                  <line x1="30%" y1="20%" x2="45%" y2="20%" stroke="currentColor" strokeWidth="1" markerEnd="url(#arrowhead)" />
+                  
+                  {/* Power Window to Split */}
+                  <path d="M 70% 20% Q 80% 20%, 80% 35% L 80% 45%" fill="none" stroke="currentColor" strokeWidth="1" markerEnd="url(#arrowhead)" />
+                  <path d="M 70% 20% Q 80% 20%, 80% 5% L 80% -5%" fill="none" stroke="currentColor" strokeWidth="1" /> {/* Hidden/Adjusted for vertical */}
+                  
+                  {/* Vertical layout connections */}
+                  <line x1="50%" y1="35%" x2="50%" y2="45%" stroke="currentColor" strokeWidth="1" markerEnd="url(#arrowhead)" />
+                  <line x1="50%" y1="65%" x2="50%" y2="75%" stroke="currentColor" strokeWidth="1" markerEnd="url(#arrowhead)" />
+                </g>
+              </svg>
+
+              <div className="relative z-10 flex flex-col gap-6">
+                <div className="flex items-center gap-8">
+                  <NodeButton 
+                    label="Contrast" 
+                    active={activeNodes.includes('Contrast')} 
+                    onClick={() => toggleNode('Contrast')}
+                    icon={<Activity className="w-4 h-4" />}
+                    compact
+                  />
+                  <div className="relative">
+                    <NodeButton 
+                      label="Power Window" 
+                      active={activeNodes.includes('PowerWindow')} 
+                      onClick={() => toggleNode('PowerWindow')}
+                      icon={<MoreHorizontal className="w-4 h-4" />}
+                      compact
+                    />
+                    {!activeNodes.includes('PowerWindow') && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="absolute -right-32 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest whitespace-nowrap shadow-lg"
+                      >
+                        Click here!
+                        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-amber-100" />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-6 pl-12">
+                  <div className="flex flex-col gap-6">
+                    <NodeButton 
+                      label="Waterfall" 
+                      active={activeNodes.includes('Waterfall')} 
+                      onClick={() => toggleNode('Waterfall')}
+                      icon={<BarChart3 className="w-4 h-4" />}
+                      compact
+                    />
+                    <NodeButton 
+                      label="Skin/Body" 
+                      active={activeNodes.includes('SkinBody')} 
+                      onClick={() => toggleNode('SkinBody')}
+                      icon={<BarChart3 className="w-4 h-4" />}
+                      compact
+                    />
+                  </div>
+                  <div className="flex items-center pt-12">
+                     <NodeButton 
+                      label="Glow" 
+                      active={activeNodes.includes('Glow')} 
+                      onClick={() => toggleNode('Glow')}
+                      icon={<Sparkles className="w-4 h-4" />}
+                      compact
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column: Preview */}
+          <div className="lg:col-span-7 relative aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
+            <motion.img 
+              key={activeNodes.join(',')}
+              initial={{ opacity: 0.9 }}
+              animate={{ opacity: 1 }}
+              src="https://picsum.photos/seed/waterfall/1280/720"
+              style={{ filter: getFilter() }}
+              className="w-full h-full object-cover transition-all duration-1000 ease-in-out"
+              alt="Grading Preview"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute top-8 left-8 px-5 py-2.5 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 text-[10px] uppercase tracking-[0.2em] font-bold">
+              Live Node Processing
+            </div>
+            
+            <div className="absolute bottom-8 right-8 flex gap-2">
+              <button 
+                onClick={() => setActiveNodes([])}
+                className="px-4 py-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const NodeButton = ({ label, active, onClick, icon, compact }: { label: string, active: boolean, onClick: () => void, icon: React.ReactNode, compact?: boolean }) => (
+  <button 
+    onClick={onClick}
+    className={cn(
+      "flex flex-col items-center justify-center gap-3 rounded-[1.5rem] border transition-all duration-700 group",
+      compact ? "p-5 min-w-[110px]" : "p-8 min-w-[180px]",
+      active 
+        ? "bg-brand-accent/10 border-brand-accent text-brand-white shadow-[0_0_40px_rgba(255,62,0,0.1)]" 
+        : "bg-white/5 border-white/10 text-brand-white/30 hover:border-white/40 hover:bg-white/10"
+    )}
+  >
+    <div className={cn(
+      "rounded-xl flex items-center justify-center transition-all duration-500",
+      compact ? "w-8 h-8" : "w-12 h-12",
+      active ? "bg-brand-accent text-white scale-110" : "bg-white/5 text-brand-white/30 group-hover:scale-105"
+    )}>
+      {icon}
+    </div>
+    <span className={cn(
+      "uppercase tracking-[0.2em] font-bold text-center",
+      compact ? "text-[8px]" : "text-[10px]"
+    )}>{label}</span>
+  </button>
+);
 
 const Work = () => {
   return (
@@ -337,17 +512,17 @@ const Work = () => {
 
 const Services = () => {
   return (
-    <section id="services" className="py-20 px-6 md:px-12 bg-zinc-950">
+    <section id="services" className="py-12 md:py-16 px-6 md:px-12 bg-zinc-950">
       <div className="max-w-screen-2xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="lg:pt-4">
             <span className="text-brand-accent font-display font-bold tracking-[0.3em] uppercase text-[10px] mb-6 block">
               What we do
             </span>
-            <h2 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            <h2 className="text-5xl md:text-7xl font-bold mb-8 leading-tight text-brand-white/90">
               ELEVATING <br />
               YOUR <br />
-              <span className="text-stroke">CONTENT</span>
+              <span>CONTENT</span>
             </h2>
             <p className="text-lg text-brand-white/60 mb-10 max-w-lg leading-relaxed">
               We provide end-to-end video post-production services tailored to your brand's unique voice. From raw footage to cinematic masterpieces.
@@ -514,42 +689,48 @@ const Contact = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Name</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-white/70">Name</label>
                 <input 
                   required
                   name="name"
                   type="text" 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors text-sm"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors text-sm text-brand-white/90 placeholder:text-white/20"
                   placeholder="John Doe"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Email</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-white/70">Email</label>
                 <input 
                   required
                   name="email"
                   type="email" 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors text-sm"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors text-sm text-brand-white/90 placeholder:text-white/20"
                   placeholder="john@example.com"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Project Type</label>
-              <select name="projectType" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors appearance-none text-sm">
-                <option>Commercial</option>
-                <option>Music Video</option>
-                <option>Documentary</option>
-                <option>Other</option>
-              </select>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-brand-white/70">Project Type</label>
+              <div className="relative">
+                <select 
+                  name="projectType" 
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors appearance-none text-sm text-brand-white/90 cursor-pointer"
+                >
+                  <option className="bg-zinc-900">Commercial</option>
+                  <option className="bg-zinc-900">Music Video</option>
+                  <option className="bg-zinc-900">Documentary</option>
+                  <option className="bg-zinc-900">Other</option>
+                </select>
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-brand-white/40" />
+              </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">Message</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-brand-white/70">Message</label>
               <textarea 
                 required
                 name="message"
                 rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors resize-none text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors resize-none text-sm text-brand-white/90 placeholder:text-white/20"
                 placeholder="Tell us about your project..."
               />
             </div>
@@ -623,6 +804,7 @@ export default function App() {
       <Navbar />
       <main>
         <Hero />
+        <GradeWithMe />
         <Work />
         <Services />
         <About />
