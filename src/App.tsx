@@ -619,6 +619,35 @@ const About = () => {
 
 const Contact = () => {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const projectTypes = [
+    'Ad Creatives',
+    'Podcast Edits',
+    'Course / Modules',
+    'Short-form Videos',
+    'Long-form Videos'
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleType = (type: string) => {
+    setSelectedTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -626,6 +655,9 @@ const Contact = () => {
     
     const form = e.currentTarget;
     const formData = new FormData(form);
+    
+    // Add custom selected types as a comma-separated string
+    formData.append('projectType', selectedTypes.join(', '));
     
     try {
       const response = await fetch('https://formspree.io/f/mgolnpov', {
@@ -639,6 +671,7 @@ const Contact = () => {
       if (response.ok) {
         setStatus('success');
         form.reset();
+        setSelectedTypes([]);
         setTimeout(() => setStatus('idle'), 5000);
       } else {
         setStatus('error');
@@ -649,9 +682,11 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-20 px-6 md:px-12 bg-brand-black relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-brand-accent/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+    <section id="contact" className="py-20 px-6 md:px-12 bg-brand-black relative">
+      {/* Decorative Elements - moved to its own relative container to avoid clipping issue with overflow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-brand-accent/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      </div>
       
       <div className="max-w-screen-2xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -711,17 +746,60 @@ const Contact = () => {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest font-bold text-brand-white/70">Project Type</label>
-              <div className="relative">
-                <select 
-                  name="projectType" 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-brand-accent transition-colors appearance-none text-sm text-brand-white/90 cursor-pointer"
+              <div className="relative" ref={dropdownRef}>
+                <div 
+                  onClick={() => setIsOpen(!isOpen)}
+                  className={cn(
+                    "w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 cursor-pointer flex flex-wrap gap-2 items-center min-h-[58px] transition-all",
+                    isOpen ? "border-brand-accent shadow-[0_0_20px_rgba(255,62,0,0.05)]" : "hover:border-white/20"
+                  )}
                 >
-                  <option className="bg-zinc-900">Commercial</option>
-                  <option className="bg-zinc-900">Music Video</option>
-                  <option className="bg-zinc-900">Documentary</option>
-                  <option className="bg-zinc-900">Other</option>
-                </select>
-                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-brand-white/40" />
+                  {selectedTypes.length === 0 ? (
+                    <span className="text-sm text-white/20">Select project types...</span>
+                  ) : (
+                    selectedTypes.map(type => (
+                      <span 
+                        key={type}
+                        className="bg-brand-accent/20 text-brand-accent text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-brand-accent/30 flex items-center gap-1.5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleType(type);
+                        }}
+                      >
+                        {type}
+                        <X className="w-2.5 h-2.5 cursor-pointer hover:text-white" />
+                      </span>
+                    ))
+                  )}
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-brand-white/40 ml-auto transition-transform duration-300",
+                    isOpen && "rotate-180"
+                  )} />
+                </div>
+
+                {isOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute z-50 top-full mt-2 left-0 w-full bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl"
+                  >
+                    <div className="p-2 max-h-60 overflow-y-auto custom-scrollbar">
+                      {projectTypes.map(type => (
+                        <div 
+                          key={type}
+                          onClick={() => toggleType(type)}
+                          className={cn(
+                            "flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-colors group",
+                            selectedTypes.includes(type) ? "bg-brand-accent/10 text-brand-accent font-bold" : "hover:bg-white/5 text-brand-white/60"
+                          )}
+                        >
+                          <span className="text-xs uppercase tracking-widest">{type}</span>
+                          {selectedTypes.includes(type) && <CheckCircle2 className="w-4 h-4" />}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
               </div>
             </div>
             <div className="space-y-2">
