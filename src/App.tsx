@@ -452,8 +452,10 @@ const NodeButton = ({ label, active, onClick, icon, compact }: { label: string, 
 const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof PROJECTS[0], index: number, isActive: boolean, onActivate: () => void }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const [vimeoThumbnail, setVimeoThumbnail] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Instant thumbnail from vumbnail.com to prevent flicker
+  const thumbnail = `https://vumbnail.com/${project.vimeoId}.jpg`;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -472,21 +474,6 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const fetchThumbnail = async () => {
-      try {
-        const response = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${project.vimeoId}`);
-        const data = await response.json();
-        setVimeoThumbnail(data.thumbnail_url);
-      } catch (error) {
-        console.error("Error fetching Vimeo thumbnail:", error);
-      }
-    };
-    if (project.vimeoId) {
-      fetchThumbnail();
-    }
-  }, [project.vimeoId]);
-
   return (
     <motion.div
       ref={cardRef}
@@ -502,19 +489,16 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
         <AnimatePresence mode="wait">
           {(isActive || (isHovered && !isActive)) && isInView ? (
             <motion.div
-              key="video"
+              key="video-container"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="w-full h-full relative overflow-hidden"
             >
-              {/* Background Layer: Blurred & Filled */}
+              {/* Background Layer: Always Muted & Backgrounded for aesthetic fill */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <iframe
-                  src={isActive 
-                    ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=0&autopause=0` 
-                    : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0`
-                  }
+                  src={`https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0&transparent=1`}
                   className="w-[124%] h-[124%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover filter blur-[40px] scale-125 opacity-30"
                   frameBorder="0"
                   allow="autoplay; fullscreen"
@@ -525,7 +509,7 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
               <iframe
                 src={isActive 
                   ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=1&fullscreen=1&badge=0&byline=0&portrait=0&title=0` 
-                  : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0`
+                  : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0&transparent=1`
                 }
                 className={cn(
                   "w-full h-full relative z-10 object-contain object-center transition-all duration-500",
@@ -539,25 +523,27 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
             </motion.div>
           ) : (
             <motion.div
-              key="thumbnail"
+              key="thumbnail-container"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="w-full h-full relative overflow-hidden"
             >
-              {/* Background Layer: Blurred & Filled */}
+              {/* Background Layer Thumbnail */}
               <img 
-                src={vimeoThumbnail || project.thumbnail} 
+                src={thumbnail} 
                 className="w-full h-full absolute inset-0 object-cover filter blur-[20px] scale-125 opacity-40"
                 alt=""
+                loading={index < 3 ? "eager" : "lazy"}
               />
               
-              {/* Foreground Layer: Actual Thumbnail Content */}
+              {/* Foreground Layer Thumbnail */}
               <img 
-                src={vimeoThumbnail || project.thumbnail} 
+                src={thumbnail} 
                 className="w-full h-full relative z-10 object-contain object-center transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                 alt={project.title}
                 referrerPolicy="no-referrer"
+                loading={index < 3 ? "eager" : "lazy"}
               />
             </motion.div>
           )}
