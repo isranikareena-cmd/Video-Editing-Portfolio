@@ -40,50 +40,50 @@ const PROJECTS = [
   {
     id: 1,
     title: "Urban Pulse",
-    category: "Commercial",
+    category: "Ad Creatives",
     thumbnail: "https://picsum.photos/seed/urban/800/600",
-    videoUrl: "#",
+    vimeoId: "1188346350",
     description: "A high-energy commercial for a streetwear brand."
   },
   {
     id: 2,
     title: "Silent Peaks",
-    category: "Documentary",
+    category: "Short Form Videos",
     thumbnail: "https://picsum.photos/seed/peaks/800/600",
-    videoUrl: "#",
+    vimeoId: "1188378016",
     description: "Cinematic journey through the Swiss Alps."
   },
   {
     id: 3,
     title: "Neon Dreams",
-    category: "Music Video",
+    category: "Short Form Videos",
     thumbnail: "https://picsum.photos/seed/neon/800/600",
-    videoUrl: "#",
+    vimeoId: "1189630286",
     description: "Vibrant visuals for an indie-pop artist."
   },
   {
     id: 4,
     title: "The Artisan",
-    category: "Corporate",
+    category: "Short Form Videos",
     thumbnail: "https://picsum.photos/seed/artisan/800/600",
-    videoUrl: "#",
+    vimeoId: "1189631605",
     description: "Showcasing the craft of a master watchmaker."
   },
   {
     id: 5,
     title: "Velocity",
-    category: "Sports",
+    category: "Long Form Videos",
     thumbnail: "https://picsum.photos/seed/velocity/800/600",
-    videoUrl: "#",
+    vimeoId: "1189622978",
     description: "Fast-paced editing for a Formula 1 recap."
   },
   {
-    id: 6,
-    title: "Ethereal",
-    category: "Short Film",
-    thumbnail: "https://picsum.photos/seed/ethereal/800/600",
-    videoUrl: "#",
-    description: "Experimental storytelling through visual effects."
+    id: 7,
+    title: "Pulse",
+    category: "Short Form Videos",
+    thumbnail: "https://picsum.photos/seed/short/800/600",
+    vimeoId: "1189621512",
+    description: "Fast-paced short-form content."
   }
 ];
 
@@ -449,7 +449,158 @@ const NodeButton = ({ label, active, onClick, icon, compact }: { label: string, 
   </button>
 );
 
+const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof PROJECTS[0], index: number, isActive: boolean, onActivate: () => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [vimeoThumbnail, setVimeoThumbnail] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const fetchThumbnail = async () => {
+      try {
+        const response = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${project.vimeoId}`);
+        const data = await response.json();
+        setVimeoThumbnail(data.thumbnail_url);
+      } catch (error) {
+        console.error("Error fetching Vimeo thumbnail:", error);
+      }
+    };
+    if (project.vimeoId) {
+      fetchThumbnail();
+    }
+  }, [project.vimeoId]);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      viewport={{ once: true }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative aspect-video overflow-hidden rounded-2xl bg-zinc-950 cursor-pointer w-full border border-white/5"
+    >
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          {(isActive || (isHovered && !isActive)) && isInView ? (
+            <motion.div
+              key="video"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full h-full relative overflow-hidden"
+            >
+              {/* Background Layer: Blurred & Filled */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <iframe
+                  src={isActive 
+                    ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=0&autopause=0` 
+                    : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0`
+                  }
+                  className="w-[124%] h-[124%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover filter blur-[40px] scale-125 opacity-30"
+                  frameBorder="0"
+                  allow="autoplay; fullscreen"
+                />
+              </div>
+              
+              {/* Foreground Layer: Actual Video Content */}
+              <iframe
+                src={isActive 
+                  ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=1&fullscreen=1&badge=0&byline=0&portrait=0&title=0` 
+                  : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0`
+                }
+                className={cn(
+                  "w-full h-full relative z-10 object-contain object-center transition-all duration-500",
+                  isActive ? "scale-100" : "scale-105"
+                )}
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={project.title}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="thumbnail"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full h-full relative overflow-hidden"
+            >
+              {/* Background Layer: Blurred & Filled */}
+              <img 
+                src={vimeoThumbnail || project.thumbnail} 
+                className="w-full h-full absolute inset-0 object-cover filter blur-[20px] scale-125 opacity-40"
+                alt=""
+              />
+              
+              {/* Foreground Layer: Actual Thumbnail Content */}
+              <img 
+                src={vimeoThumbnail || project.thumbnail} 
+                className="w-full h-full relative z-10 object-contain object-center transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                alt={project.title}
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {!isActive && (
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20" />
+      )}
+      
+      {/* Play Button Overlay */}
+      {!isActive && (
+        <div className="absolute inset-0 flex items-center justify-center z-40 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onActivate();
+            }}
+            className="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-white shadow-2xl hover:scale-110 transition-transform active:scale-95"
+          >
+            <Play className="fill-current w-6 h-6 ml-1" />
+          </button>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 const Work = () => {
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeVideoId, setActiveVideoId] = useState<number | null>(null);
+
+  const categories = ['All', 'Ad Creatives', 'Short Form Videos', 'Long Form Videos'];
+  
+  const filteredProjects = activeCategory === "All" 
+    ? PROJECTS 
+    : PROJECTS.filter(p => p.category === activeCategory);
+
+  // Reset active video when category changes
+  useEffect(() => {
+    setActiveVideoId(null);
+  }, [activeCategory]);
+
   return (
     <section id="work" className="py-20 px-6 md:px-12 bg-brand-black">
       <div className="max-w-screen-2xl mx-auto">
@@ -460,11 +611,17 @@ const Work = () => {
               A curated collection of projects where we pushed the boundaries of visual storytelling.
             </p>
           </div>
-          <div className="flex gap-4">
-            {['All', 'Commercial', 'Music Video', 'Short Film'].map((cat) => (
+          <div className="flex flex-wrap gap-3">
+            {categories.map((cat) => (
               <button 
                 key={cat}
-                className="text-[10px] uppercase tracking-widest font-bold px-4 py-2 border border-white/10 rounded-full hover:border-brand-accent transition-colors"
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "text-[10px] uppercase tracking-widest font-bold px-5 py-2.5 border transition-all duration-300 rounded-full",
+                  activeCategory === cat 
+                    ? "bg-brand-accent border-brand-accent text-brand-white"
+                    : "border-white/10 text-brand-white/60 hover:border-white/40"
+                )}
               >
                 {cat}
               </button>
@@ -472,39 +629,22 @@ const Work = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PROJECTS.map((project, i) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-900 cursor-pointer"
-            >
-              <img 
-                src={project.thumbnail} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
-                alt={project.title}
-                referrerPolicy="no-referrer"
+        <motion.div 
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredProjects.map((project, i) => (
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={i} 
+                isActive={activeVideoId === project.id}
+                onActivate={() => setActiveVideoId(project.id)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-              
-              <div className="absolute bottom-0 left-0 w-full p-8 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-brand-accent font-bold mb-2 block">
-                  {project.category}
-                </span>
-                <h3 className="text-2xl font-bold mb-2">{project.title}</h3>
-                <p className="text-sm text-brand-white/60 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  {project.description}
-                </p>
-                <div className="mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  View Project <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );
