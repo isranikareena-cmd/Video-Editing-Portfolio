@@ -50,7 +50,7 @@ const PROJECTS = [
     title: "Silent Peaks",
     category: "Short Form Videos",
     thumbnail: "https://picsum.photos/seed/peaks/800/600",
-    vimeoId: "1188378016",
+    vimeoId: "1192208427",
     description: "Cinematic journey through the Swiss Alps."
   },
   {
@@ -58,7 +58,7 @@ const PROJECTS = [
     title: "Neon Dreams",
     category: "Short Form Videos",
     thumbnail: "https://picsum.photos/seed/neon/800/600",
-    vimeoId: "1189630286",
+    vimeoId: "1192212829",
     description: "Vibrant visuals for an indie-pop artist."
   },
   {
@@ -449,13 +449,11 @@ const NodeButton = ({ label, active, onClick, icon, compact }: { label: string, 
   </button>
 );
 
-const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof PROJECTS[0], index: number, isActive: boolean, onActivate: () => void }) => {
+const ProjectCard = ({ project, index, isActive, onActivate, aspectRatio = "video" }: { project: typeof PROJECTS[0], index: number, isActive: boolean, onActivate: () => void, aspectRatio?: "video" | "reel" }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [vimeoThumbnail, setVimeoThumbnail] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-
-  // Instant thumbnail from vumbnail.com to prevent flicker
-  const thumbnail = `https://vumbnail.com/${project.vimeoId}.jpg`;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -474,6 +472,21 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const fetchThumbnail = async () => {
+      try {
+        const response = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${project.vimeoId}&width=1280`);
+        const data = await response.json();
+        setVimeoThumbnail(data.thumbnail_url);
+      } catch (error) {
+        console.error("Error fetching Vimeo thumbnail:", error);
+      }
+    };
+    if (project.vimeoId) {
+      fetchThumbnail();
+    }
+  }, [project.vimeoId]);
+
   return (
     <motion.div
       ref={cardRef}
@@ -483,7 +496,10 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
       viewport={{ once: true }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative aspect-video overflow-hidden rounded-2xl bg-zinc-950 cursor-pointer w-full border border-white/5"
+      className={cn(
+        "group relative overflow-hidden rounded-2xl bg-zinc-950 cursor-pointer w-full border border-white/5",
+        aspectRatio === "reel" ? "aspect-[9/16]" : "aspect-video"
+      )}
     >
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
@@ -495,28 +511,17 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
               exit={{ opacity: 0 }}
               className="w-full h-full relative overflow-hidden"
             >
-              {/* Background Layer: Always Muted & Backgrounded for aesthetic fill */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <iframe
-                  src={`https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0&transparent=1`}
-                  className="w-[124%] h-[124%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover filter blur-[40px] scale-125 opacity-30"
-                  frameBorder="0"
-                  allow="autoplay; fullscreen"
-                />
-              </div>
-              
-              {/* Foreground Layer: Actual Video Content */}
               <iframe
                 src={isActive 
-                  ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=1&fullscreen=1&badge=0&byline=0&portrait=0&title=0` 
+                  ? `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=0&controls=1&fullscreen=1&badge=0&byline=0&portrait=0&title=0&dnt=1` 
                   : `https://player.vimeo.com/video/${project.vimeoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0&transparent=1`
                 }
                 className={cn(
-                  "w-full h-full relative z-10 object-contain object-center transition-all duration-500",
-                  isActive ? "scale-100" : "scale-105"
+                  "w-full h-full relative z-10 object-cover object-center transition-all duration-500",
+                  isActive ? "scale-100" : "scale-110"
                 )}
                 frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 allowFullScreen
                 title={project.title}
               />
@@ -529,18 +534,9 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
               exit={{ opacity: 0 }}
               className="w-full h-full relative overflow-hidden"
             >
-              {/* Background Layer Thumbnail */}
               <img 
-                src={thumbnail} 
-                className="w-full h-full absolute inset-0 object-cover filter blur-[20px] scale-125 opacity-40"
-                alt=""
-                loading={index < 3 ? "eager" : "lazy"}
-              />
-              
-              {/* Foreground Layer Thumbnail */}
-              <img 
-                src={thumbnail} 
-                className="w-full h-full relative z-10 object-contain object-center transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                src={vimeoThumbnail || project.thumbnail} 
+                className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
                 alt={project.title}
                 referrerPolicy="no-referrer"
                 loading={index < 3 ? "eager" : "lazy"}
@@ -550,19 +546,20 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
         </AnimatePresence>
       </div>
 
+      {/* Gradient Overlay */}
       {!isActive && (
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity z-20" />
       )}
       
       {/* Play Button Overlay */}
       {!isActive && (
-        <div className="absolute inset-0 flex items-center justify-center z-40 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute inset-0 flex items-center justify-center z-40 opacity-0 group-hover:opacity-100 transition-all duration-300">
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onActivate();
             }}
-            className="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-white shadow-2xl hover:scale-110 transition-transform active:scale-95"
+            className="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-white shadow-2xl scale-90 group-hover:scale-100 transition-transform active:scale-95"
           >
             <Play className="fill-current w-6 h-6 ml-1" />
           </button>
@@ -572,65 +569,63 @@ const ProjectCard = ({ project, index, isActive, onActivate }: { project: typeof
   );
 };
 
+
 const Work = () => {
-  const [activeCategory, setActiveCategory] = useState("All");
   const [activeVideoId, setActiveVideoId] = useState<number | null>(null);
 
-  const categories = ['All', 'Ad Creatives', 'Short Form Videos', 'Long Form Videos'];
-  
-  const filteredProjects = activeCategory === "All" 
-    ? PROJECTS 
-    : PROJECTS.filter(p => p.category === activeCategory);
-
-  // Reset active video when category changes
-  useEffect(() => {
-    setActiveVideoId(null);
-  }, [activeCategory]);
+  const shortFormProjects = PROJECTS.filter(p => [2, 3, 4, 7].includes(p.id));
+  const longFormProjects = PROJECTS.filter(p => [1, 5].includes(p.id));
 
   return (
     <section id="work" className="py-20 px-6 md:px-12 bg-brand-black">
       <div className="max-w-screen-2xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
-          <div>
-            <h2 className="text-4xl md:text-6xl font-bold mb-4">SELECTED WORK</h2>
-            <p className="text-brand-white/50 max-w-md">
-              A curated collection of projects where we pushed the boundaries of visual storytelling.
-            </p>
+        <div className="mb-20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+            <div>
+              <h2 className="text-4xl md:text-6xl font-bold mb-4">SHORT FORM VIDEOS</h2>
+              <p className="text-brand-white/50 max-w-md">
+                Fast-paced, high-impact vertical content tailored for reels, shorts, and TikTok.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {categories.map((cat) => (
-              <button 
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "text-[10px] uppercase tracking-widest font-bold px-5 py-2.5 border transition-all duration-300 rounded-full",
-                  activeCategory === cat 
-                    ? "bg-brand-accent border-brand-accent text-brand-white"
-                    : "border-white/10 text-brand-white/60 hover:border-white/40"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <motion.div 
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredProjects.map((project, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {shortFormProjects.map((project, i) => (
               <ProjectCard 
                 key={project.id} 
                 project={project} 
                 index={i} 
                 isActive={activeVideoId === project.id}
                 onActivate={() => setActiveVideoId(project.id)}
+                aspectRatio="reel"
               />
             ))}
-          </AnimatePresence>
-        </motion.div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+            <div>
+              <h2 className="text-4xl md:text-6xl font-bold mb-4">LONG FORM VIDEOS</h2>
+              <p className="text-brand-white/50 max-w-md">
+                Cinematic widescreen storytelling from commercials to documentaries.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {longFormProjects.map((project, i) => (
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={i} 
+                isActive={activeVideoId === project.id}
+                onActivate={() => setActiveVideoId(project.id)}
+                aspectRatio="video"
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
