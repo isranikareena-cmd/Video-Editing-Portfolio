@@ -41,7 +41,6 @@ const PROJECTS = [
     id: 1,
     title: "Urban Pulse",
     category: "Ad Creatives",
-    thumbnail: "https://picsum.photos/seed/urban/800/600",
     vimeoId: "1188346350",
     description: "A high-energy commercial for a streetwear brand."
   },
@@ -49,7 +48,6 @@ const PROJECTS = [
     id: 2,
     title: "Silent Peaks",
     category: "Short Form Videos",
-    thumbnail: "https://picsum.photos/seed/peaks/800/600",
     vimeoId: "1192208427",
     description: "Cinematic journey through the Swiss Alps."
   },
@@ -57,7 +55,6 @@ const PROJECTS = [
     id: 3,
     title: "Neon Dreams",
     category: "Short Form Videos",
-    thumbnail: "https://picsum.photos/seed/neon/800/600",
     vimeoId: "1192212829",
     description: "Vibrant visuals for an indie-pop artist."
   },
@@ -65,7 +62,6 @@ const PROJECTS = [
     id: 4,
     title: "The Artisan",
     category: "Short Form Videos",
-    thumbnail: "https://picsum.photos/seed/artisan/800/600",
     vimeoId: "1189631605",
     description: "Showcasing the craft of a master watchmaker."
   },
@@ -73,7 +69,6 @@ const PROJECTS = [
     id: 5,
     title: "Velocity",
     category: "Long Form Videos",
-    thumbnail: "https://picsum.photos/seed/velocity/800/600",
     vimeoId: "1189622978",
     description: "Fast-paced editing for a Formula 1 recap."
   },
@@ -81,7 +76,6 @@ const PROJECTS = [
     id: 7,
     title: "Pulse",
     category: "Short Form Videos",
-    thumbnail: "https://picsum.photos/seed/short/800/600",
     vimeoId: "1189621512",
     description: "Fast-paced short-form content."
   }
@@ -532,15 +526,21 @@ const ProjectCard = ({ project, index, isActive, onActivate, aspectRatio = "vide
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full h-full relative overflow-hidden"
+              className="w-full h-full relative overflow-hidden bg-zinc-900"
             >
-              <img 
-                src={vimeoThumbnail || project.thumbnail} 
-                className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
-                alt={project.title}
-                referrerPolicy="no-referrer"
-                loading={index < 3 ? "eager" : "lazy"}
-              />
+              {vimeoThumbnail ? (
+                <img 
+                  src={vimeoThumbnail} 
+                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+                  alt={project.title}
+                  referrerPolicy="no-referrer"
+                  loading={index < 3 ? "eager" : "lazy"}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-brand-accent/20 border-t-brand-accent rounded-full animate-spin" />
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
